@@ -31,7 +31,7 @@ func fix(source []byte, dest io.Writer, fixers []fixers.Fixer) error {
 	parser := md.Parser()
 	for _, fixer := range fixers {
 		var err error
-		source, err = fixer.Fix(parser, source)
+		source, err = fixer.Fix(parser.Parse(text.NewReader(source)), source)
 		if err != nil {
 			return err
 		}

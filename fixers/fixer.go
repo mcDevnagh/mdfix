@@ -1,9 +1,7 @@
 package fixers
 
-import (
-	"github.com/yuin/goldmark/parser"
-)
+import "github.com/yuin/goldmark/ast"
 
 type Fixer interface {
-	Fix(parser parser.Parser, source []byte) (fixed []byte, err error)
+	Fix(node ast.Node, source []byte) (fixed []byte, err error)
 }

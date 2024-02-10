@@ -5,7 +5,6 @@ import (
 	"unicode"
 
 	"github.com/yuin/goldmark/ast"
-	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/text"
 )
 
@@ -13,12 +12,11 @@ type Whitespace struct {
 	TextWidth int
 }
 
-func (f *Whitespace) Fix(parser parser.Parser, source []byte) ([]byte, error) {
+func (f *Whitespace) Fix(node ast.Node, source []byte) ([]byte, error) {
 	if f.TextWidth <= 0 {
 		return nil, fmt.Errorf("invalid TextWidth (%d). Value must be greater than 0", f.TextWidth)
 	}
 
-	node := parser.Parse(text.NewReader(source))
 	ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering && n.Type() == ast.TypeBlock && n.Kind() == ast.KindParagraph {
 			lines := n.Lines()
