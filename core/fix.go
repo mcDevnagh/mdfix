@@ -13,7 +13,9 @@ import (
 
 func Fix(source []byte, dest io.Writer) error {
 	return fix(source, dest, []fixers.Fixer{
-		&fixers.Whitespace{},
+		&fixers.Whitespace{
+			TextWidth: 80,
+		},
 	})
 }
 

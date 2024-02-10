@@ -1,6 +1,7 @@
 package fixers
 
 import (
+	"fmt"
 	"unicode"
 
 	"github.com/yuin/goldmark/ast"
@@ -8,9 +9,15 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
-type Whitespace struct{}
+type Whitespace struct {
+	TextWidth int
+}
 
 func (f *Whitespace) Fix(parser parser.Parser, source []byte) ([]byte, error) {
+	if f.TextWidth <= 0 {
+		return nil, fmt.Errorf("invalid TextWidth (%d). Value must be greater than 0", f.TextWidth)
+	}
+
 	node := parser.Parse(text.NewReader(source))
 	ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering && n.Type() == ast.TypeBlock && n.Kind() == ast.KindParagraph {
@@ -34,7 +41,7 @@ func (f *Whitespace) Fix(parser parser.Parser, source []byte) ([]byte, error) {
 }
 
 func (f *Whitespace) cut(line text.Segment, source []byte) {
-	target_len := line.Start + 80
+	target_len := line.Start + f.TextWidth
 	if line.Stop > target_len {
 		var stop int
 		for stop = target_len; stop > line.Start; stop-- {
