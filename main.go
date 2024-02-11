@@ -11,7 +11,9 @@ import (
 )
 
 func main() {
-	in_place := flag.Bool("i", false, "inplace")
+	in_place := flag.Bool("i", false, "in place")
+	textwidth := flag.Int("w", 80, "text width")
+
 	flag.Parse()
 	fileName := flag.Arg(0)
 	var file *os.File
@@ -50,7 +52,7 @@ func main() {
 	}
 
 	err = core.Fix(source, file, fixers.Options{
-		TextWidth: 80,
+		TextWidth: *textwidth,
 		TopDir:    cwd,
 		WorkDir:   path.Dir(fileName),
 	})
