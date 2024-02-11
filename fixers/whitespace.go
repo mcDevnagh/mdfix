@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"unicode"
 
+	"github.com/yuin/goldmark"
 	"github.com/yuin/goldmark/ast"
 	"github.com/yuin/goldmark/text"
 )
@@ -12,7 +13,7 @@ type Whitespace struct {
 	TextWidth int
 }
 
-func (f *Whitespace) Fix(node ast.Node, source []byte) ([]byte, error) {
+func (f *Whitespace) Fix(node ast.Node, source []byte, _ goldmark.Markdown) ([]byte, error) {
 	if f.TextWidth <= 0 {
 		return nil, fmt.Errorf("invalid TextWidth (%d). Value must be greater than 0", f.TextWidth)
 	}
