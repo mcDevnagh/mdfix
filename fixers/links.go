@@ -30,11 +30,21 @@ func (f *Links) Fix(node ast.Node, source []byte, md goldmark.Markdown) ([]byte,
 	var fixed bytes.Buffer
 	ast.Walk(node, func(n ast.Node, entering bool) (ast.WalkStatus, error) {
 		if entering {
-			if n.Kind() == ast.KindLink {
+			if n.Kind() == ast.KindLink || n.Kind() == ast.KindImage {
+				var dest []byte
+				var img *ast.Image
 				link, ok := n.(*ast.Link)
 				if ok {
-					dest := link.Destination
-					idx := bytes.IndexRune(link.Destination, '#')
+					dest = link.Destination
+				} else {
+					img, ok = n.(*ast.Image)
+					if ok {
+						dest = img.Destination
+					}
+				}
+
+				if ok {
+					idx := bytes.IndexRune(dest, '#')
 					var anchor []byte
 					if idx != 0 {
 						if idx > 0 {
@@ -48,7 +58,11 @@ func (f *Links) Fix(node ast.Node, source []byte, md goldmark.Markdown) ([]byte,
 							file, err = filepath.Rel(f.WorkDir, path.Join(parent, file))
 							if err == nil {
 								dest = append([]byte(file), anchor...)
-								link.Destination = dest
+								if link != nil {
+									link.Destination = dest
+								} else if img != nil {
+									img.Destination = dest
+								}
 							}
 						}
 					}
