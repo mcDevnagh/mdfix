@@ -11,12 +11,15 @@ import (
 	"gitlab.com/mcdonagh/mdfix/fixers"
 )
 
-func Fix(source []byte, dest io.Writer) error {
-	return fix(source, dest, []fixers.Fixer{
-		&fixers.Whitespace{
+func Fix(source []byte, dest io.Writer, options fixers.Options) error {
+	_fixers := make([]fixers.Fixer, 0, 2)
+	if options.TextWidth > 0 {
+		_fixers = append(_fixers, &fixers.Whitespace{
 			TextWidth: 80,
-		},
-	})
+		})
+	}
+
+	return fix(source, dest, _fixers)
 }
 
 func fix(source []byte, dest io.Writer, fixers []fixers.Fixer) error {

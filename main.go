@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"gitlab.com/mcdonagh/mdfix/core"
+	"gitlab.com/mcdonagh/mdfix/fixers"
 )
 
 func main() {
@@ -42,7 +43,10 @@ func main() {
 		file = os.Stdout
 	}
 
-	err = core.Fix(source, file)
+	err = core.Fix(source, file, fixers.Options{
+		TextWidth: 80,
+	})
+
 	if err != nil {
 		panic(err)
 	}
