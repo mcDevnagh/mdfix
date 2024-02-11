@@ -2,9 +2,11 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"os"
 	"path"
+	"sync"
 
 	"gitlab.com/mcdonagh/mdfix/core"
 	"gitlab.com/mcdonagh/mdfix/fixers"
@@ -12,52 +14,67 @@ import (
 
 func main() {
 	in_place := flag.Bool("i", false, "in place")
-	textwidth := flag.Int("w", 80, "text width")
+	text_width := flag.Int("w", 80, "text width")
+	n_parallel := flag.Int("n", 16, "number of parallel fixes")
 
 	flag.Parse()
-	fileName := flag.Arg(0)
-	var file *os.File
-	var err error
-	if fileName == "" {
-		file = os.Stdin
-	} else {
-		file, err = os.Open(fileName)
-		if err != nil {
-			panic(err)
-		}
+	file_chan := make(chan string)
+	var wg sync.WaitGroup
+	for i := 0; i < *n_parallel; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for file_name := range file_chan {
+				file, err := os.Open(file_name)
+				if err != nil {
+					panic(err)
+				}
+
+				source, err := io.ReadAll(file)
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+
+				err = file.Close()
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+
+				if *in_place {
+					file, err = os.Create(file_name)
+					if err != nil {
+						fmt.Fprintln(os.Stderr, err)
+						return
+					}
+				} else {
+					file = os.Stdout
+				}
+
+				cwd, err := os.Getwd()
+				if err != nil {
+					cwd = ""
+				}
+
+				err = core.Fix(source, file, fixers.Options{
+					TextWidth: *text_width,
+					TopDir:    cwd,
+					WorkDir:   path.Dir(file_name),
+				})
+
+				if err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					return
+				}
+			}
+		}()
 	}
 
-	source, err := io.ReadAll(file)
-	if err != nil {
-		panic(err)
+	for _, file_name := range flag.Args() {
+		file_chan <- file_name
 	}
 
-	err = file.Close()
-	if err != nil {
-		panic(err)
-	}
-
-	if *in_place {
-		file, err = os.Create(fileName)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		file = os.Stdout
-	}
-
-	cwd, err := os.Getwd()
-	if err != nil {
-		cwd = ""
-	}
-
-	err = core.Fix(source, file, fixers.Options{
-		TextWidth: *textwidth,
-		TopDir:    cwd,
-		WorkDir:   path.Dir(fileName),
-	})
-
-	if err != nil {
-		panic(err)
-	}
+	close(file_chan)
+	wg.Wait()
 }
