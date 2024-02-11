@@ -4,6 +4,7 @@ import (
 	"flag"
 	"io"
 	"os"
+	"path"
 
 	"gitlab.com/mcdonagh/mdfix/core"
 	"gitlab.com/mcdonagh/mdfix/fixers"
@@ -12,13 +13,13 @@ import (
 func main() {
 	in_place := flag.Bool("i", false, "inplace")
 	flag.Parse()
-	path := flag.Arg(0)
+	fileName := flag.Arg(0)
 	var file *os.File
 	var err error
-	if path == "" {
+	if fileName == "" {
 		file = os.Stdin
 	} else {
-		file, err = os.Open(path)
+		file, err = os.Open(fileName)
 		if err != nil {
 			panic(err)
 		}
@@ -35,7 +36,7 @@ func main() {
 	}
 
 	if *in_place {
-		file, err = os.Create(path)
+		file, err = os.Create(fileName)
 		if err != nil {
 			panic(err)
 		}
@@ -43,8 +44,15 @@ func main() {
 		file = os.Stdout
 	}
 
+	cwd, err := os.Getwd()
+	if err != nil {
+		cwd = ""
+	}
+
 	err = core.Fix(source, file, fixers.Options{
 		TextWidth: 80,
+		TopDir:    cwd,
+		WorkDir:   path.Dir(fileName),
 	})
 
 	if err != nil {

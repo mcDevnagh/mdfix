@@ -19,6 +19,13 @@ func Fix(source []byte, dest io.Writer, options fixers.Options) error {
 		})
 	}
 
+	if options.WorkDir != "" {
+		_fixers = append(_fixers, &fixers.Links{
+			TopDir:  options.TopDir,
+			WorkDir: options.WorkDir,
+		})
+	}
+
 	return fix(source, dest, _fixers)
 }
 
